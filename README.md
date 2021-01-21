@@ -19,17 +19,19 @@ Simply configure the key-value pairs under `requirements` in `config.json`:
 {
     "requirements": {
             "location": "Bristol",
-            "beds": "4",
+            "beds_min": "4",
+            "beds_max": "4",
             "bathrooms": "2"
         }
 }
 ```
 
-| Key         | Description             | Note                        |
-| ----------- | ----------------------- | --------------------------- |
-| `location`  | Search Location         | Postcodes are supported     |
-| `beds`      | Number of beds          | N/A                         |
-| `bathrooms` | Number of bathrooms     | N/A                         |
+| Key         | Description             | Note                                                   |
+| ----------- | ----------------------- | ------------------------------------------------------ |
+| `location`  | Search Location         | Postcodes are supported                                |
+| `beds_min`  | Minimum number of beds  | N/A                                                    |
+| `beds_max`  | Maximum number of beds  | N/A                                                    |
+| `bathrooms` | Number of bathrooms     | Number of bathrooms is a minimum                       |
 
 
 ### Libraries
