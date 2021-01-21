@@ -2,6 +2,10 @@
 
 An automation script that searches Zoopla and Rightmove for my accommodation for the 2021-2022 academic year.
 
+**THIS SCRIPT IS NOT COMPLETE**
+WIP:
+- [ ] 
+
 ---
 
 ## Requirements
@@ -9,7 +13,7 @@ An automation script that searches Zoopla and Rightmove for my accommodation for
 This script requires python 3.7 or above.
 ### config.json
 
-Simply configure the `requirements` key-value pairs in `config.json`
+Simply configure the key-value pairs under `requirements` in `config.json`:
 
 ```json
 {
