@@ -207,7 +207,6 @@ class Accom_bot:
                                 )
                             )
         links = list(set(links))
-        # TODO Check requirements
         links = self.check_bathroom_requirements(website, links)
         logger.info(f"Found {len(links)} results from website {website['url']}")
         return links
@@ -259,9 +258,4 @@ class Tests(unittest.TestCase):
 
 if __name__ == "__main__":
     accom_bot = Accom_bot()
-    urls = [
-        "https://www.zoopla.co.uk/to-rent/details/50932446?search_identifier=6af4e1a066fc9d45512c3b522cd34cda"
-    ]
-    urls_alt = ["https://www.rightmove.co.uk/properties/88480921#/"]
-    logger.info(accom_bot.check_bathroom_requirements(accom_bot.websites[1], urls_alt))
-    # accom_bot.main()
+    accom_bot.main()
