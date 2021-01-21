@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
-from os import EX_DATAERR
+from typing import final
 from loguru import logger
 from selenium import webdriver
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from concurrent.futures import ThreadPoolExecutor
+from lxml import html
+import requests
 import platform
 import re
 import unittest
@@ -45,7 +47,7 @@ class Accom_bot:
             driver = webdriver.Firefox()
         return driver
 
-    def validate_config(self, config: dict):
+    def validate_config(self, config: dict) -> dict:
         requirements = config["requirements"]
         min_beds = requirements.get("beds_min", None)
         max_beds = requirements.get("beds_max", None)
@@ -89,6 +91,26 @@ class Accom_bot:
                 raise ValueError(errors)
             else:
                 return config
+
+    def request_thread_function(self, url: str) -> str:
+        page = requests.get(url)
+        return html.fromstring(page.content)
+
+    def check_bathroom_requirements(self, website: dict, places: list) -> list:
+        final_places = []
+        with ThreadPoolExecutor(max_workers=70) as e:
+            results = list(e.map(self.request_thread_function, places))
+        number_of_bathrooms = self.requirements["bathrooms"]
+        search_elements = website["check_property"]
+        for index, place in enumerate(places):
+            url_element = results[index]
+            bathrooms = url_element.xpath(search_elements["xpath"])
+            if (
+                bathrooms
+                and bathrooms[0][search_elements["index"]] >= number_of_bathrooms
+            ):
+                final_places.append(place)
+        return final_places
 
     def process_action(self, driver: webdriver, key: str, action: str) -> None:
         if action == "xpath":
@@ -180,9 +202,13 @@ class Accom_bot:
                     for step in page_instructions:
                         for key1, action1 in step.items():
                             links = sorted(
-                                self.handle_pagination(driver, key1, action1, key, max_page)
+                                self.handle_pagination(
+                                    driver, key1, action1, key, max_page
+                                )
                             )
         links = list(set(links))
+        # TODO Check requirements
+        links = self.check_bathroom_requirements(website, links)
         logger.info(f"Found {len(links)} results from website {website['url']}")
         return links
 
@@ -191,7 +217,7 @@ class Accom_bot:
         places = "\n".join(all_places)
         logger.info(f"All {len(places)} places:\n{places}")
 
-    def find_places(self, data: dict): 
+    def find_places(self, data: dict):
         driver = data["driver"]
         website = data["website"]
         driver.set_window_size(1920, 1080)
@@ -209,14 +235,12 @@ class Accom_bot:
             all_places = []
             data = []
             for index, website in enumerate(self.websites):
-                data = {
-                    "driver": driver,
-                    "website": website
-                }
+                data = {"driver": driver, "website": website}
                 results = self.find_places(data)
                 for x in results:
                     all_places.append(x)
             driver.quit()
+            all_places = sorted(all_places)
             self.print_places(all_places)
             return SUCCESS_CODE
         except:
@@ -235,4 +259,9 @@ class Tests(unittest.TestCase):
 
 if __name__ == "__main__":
     accom_bot = Accom_bot()
-    accom_bot.main()
+    urls = [
+        "https://www.zoopla.co.uk/to-rent/details/50932446?search_identifier=6af4e1a066fc9d45512c3b522cd34cda"
+    ]
+    urls_alt = ["https://www.rightmove.co.uk/properties/88480921#/"]
+    logger.info(accom_bot.check_bathroom_requirements(accom_bot.websites[1], urls_alt))
+    # accom_bot.main()

@@ -24,9 +24,10 @@
             "pagination": [
                 {"//*[@id='__next']/div[4]/div/main/div[2]/div[2]/ul": "get_xpath_list"}
             ],
-            "check_property": [
-                
-            ]
+            "check_property": {
+                "xpath": "//*[@id='property-details-tab']/div[1]/ul/li[2]/span/text()",
+                "index": 0
+            }
         },
         {
             "url": "https://www.rightmove.co.uk/student-accommodation.html",
@@ -44,10 +45,10 @@
                 {"//*[@id='l-container']/div[3]/div/div/div/div[3]/button": "select"}
             ],
             "max_page": "//*[@id='l-container']/div[3]/div/div/div/div[2]/span[3]",
-            "check_property": [
-
-         
-            ]
+            "check_property": {
+                "xpath": "//*[@id='root']/div/div[3]/main/div[6]/div[2]/div[2]/div[2]/div/text()",
+                "index": 1
+            }
         }
     ]
 }
