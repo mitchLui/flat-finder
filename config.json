@@ -1,0 +1,52 @@
+{
+    "requirements": {
+        "location": "Bristol",
+        "beds": "4",
+        "bathrooms": "2"
+    },
+    "websites": [
+        {
+            "url": "https://www.zoopla.co.uk",
+            "search": [
+                {"//*[@id='cookie-consent-form']/div/div/div/button[2]": "xpath"},
+                {"//*[@id='search-tabs-to-rent']": "xpath"},
+                {"//*[@id='beds_min']": "beds"},
+                {"search-input-location": "location"},
+                {"search-submit": "click_id"},
+                {"AnyBeds_testId": "click_id"},
+                {"//*[@id='beds_max']": "beds"},
+                {"[data-testid='search-button']": "css"}
+            ],
+            "step": [
+                {"^https:\\/\\/www\\.zoopla\\.co\\.uk/to-rent/details/\\d+\\?search_identifier=.*$": "match_url_regex"}
+            ],
+            "pagination": [
+                {"//*[@id='__next']/div[4]/div/main/div[2]/div[2]/ul": "get_xpath_list"}
+            ],
+            "check_property": [
+                
+            ]
+        },
+        {
+            "url": "https://www.rightmove.co.uk/student-accommodation.html",
+            "search": [
+                {"searchLocation": "location"},
+                {"//*[@id='minBedrooms']": "beds"},
+                {"//*[@id='maxBedrooms']": "beds"},
+                {"button-findAccomodation": "click_id"},
+                {"button-findAccomodation": "click_id"}
+            ],
+            "step": [
+                {"^https:\\/\\/www\\.rightmove\\.co\\.uk/properties/\\d+$": "match_url_regex"}
+            ],
+            "pagination": [
+                {"//*[@id='l-container']/div[3]/div/div/div/div[3]/button": "select"}
+            ],
+            "max_page": "//*[@id='l-container']/div[3]/div/div/div/div[2]/span[3]",
+            "check_property": [
+
+         
+            ]
+        }
+    ]
+}
