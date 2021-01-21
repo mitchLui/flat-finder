@@ -4,7 +4,7 @@ An automation script that searches Zoopla and Rightmove for my accommodation for
 
 **THIS SCRIPT IS NOT COMPLETE**
 WIP:
-- [ ] 
+- [ ] Bathroom check
 
 ---
 
