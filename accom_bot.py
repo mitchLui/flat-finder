@@ -6,6 +6,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from concurrent.futures import ThreadPoolExecutor
 from lxml import html
+import webbrowser
 import requests
 import platform
 import re
@@ -226,6 +227,10 @@ class Accom_bot:
         links = self.get_links(driver, website, max_page)
         return links
 
+    def open_links(self, places: list):
+        for place in places:
+            webbrowser.open_new_tab(place)
+
     def main(self) -> int:
         driver = self.init_driver()
         try:
@@ -239,6 +244,7 @@ class Accom_bot:
             driver.quit()
             all_places = sorted(all_places)
             self.print_places(all_places)
+            self.open_links(all_places)
             return SUCCESS_CODE
         except:
             driver.quit()

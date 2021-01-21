@@ -46,7 +46,7 @@
             ],
             "max_page": "//*[@id='l-container']/div[3]/div/div/div/div[2]/span[3]",
             "check_property": {
-                "xpath": "//*[@id='root']/div/div[3]/main/div[6]/div[2]/div[2]/div[2]/div/text()",
+                "xpath": "//*[@id='root']/div/div[3]/main/div[6]/div[3]/div[2]/div[2]/div/text()",
                 "index": 1
             }
         }
