@@ -2,10 +2,6 @@
 
 An automation script that searches Zoopla and Rightmove for my accommodation for the 2021-2022 academic year.
 
-**THIS SCRIPT IS NOT COMPLETE**
-WIP:
-- [ ] Bathroom check
-
 ---
 
 ## Requirements
