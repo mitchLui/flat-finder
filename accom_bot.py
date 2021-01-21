@@ -4,6 +4,7 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
+import platform
 import re
 import unittest
 import json
@@ -16,9 +17,8 @@ EXIT_CODE = 1
 
 class Accom_bot:
     def __init__(self) -> None:
-        self.driver = webdriver.Safari()
-        self.driver.set_window_size(1920, 1080)
-        config = self.read_config()
+        self.driver = None
+        config = self.validate_config(self.read_config())
         self.requirements = config["requirements"]
         self.websites = config["websites"]
 
@@ -35,6 +35,60 @@ class Accom_bot:
             else:
                 raise ValueError(f"No config found.")
 
+    def init_driver(self) -> webdriver:
+        if platform.system() == "Darwin":
+            driver = webdriver.Safari()
+        elif platform.system() == "Windows":
+            driver = webdriver.Edge()
+        else:
+            driver = webdriver.Firefox()
+        return driver
+
+    def validate_config(self, config: dict):
+        requirements = config["requirements"]
+        min_beds = requirements.get("beds_min", None)
+        max_beds = requirements.get("beds_max", None)
+        location = requirements.get("location", None)
+        bathrooms = requirements.get("bathrooms", None)
+        errors = []
+        if not min_beds:
+            errors.append("key-value pair 'beds_min' not found.")
+        if not max_beds:
+            errors.append("key-value pair 'beds_max' not found.")
+        if not location:
+            errors.append("key-value pair 'location' not found.")
+        if not bathrooms:
+            errors.append("key-value pair 'bathrooms' not found.")
+        try:
+            int(bathrooms)
+        except:
+            errors.append(
+                f"value for key 'bathrooms' is not an integer (value: {bathrooms})"
+            )
+        try:
+            if (min_beds and max_beds) and (int(min_beds) > int(max_beds)):
+                errors.append("minimum number of beds exceed maximum number of beds")
+        except Exception:
+            try:
+                int(min_beds)
+            except:
+                errors.append(
+                    f"value for key 'beds_min' is not an integer (value: {min_beds})"
+                )
+            try:
+                int(max_beds)
+            except:
+                errors.append(
+                    f"value for key 'beds_max' is not an integer (value: {max_beds})"
+                )
+        finally:
+            if errors:
+                errors = "\n".join(errors)
+                errors = f"The following errors are found while loading config.json:\n{errors}"
+                raise ValueError(errors)
+            else:
+                return config
+
     def process_action(self, key: str, action: str) -> None:
         if action == "xpath":
             self.driver.find_element_by_xpath(key).click()
@@ -43,7 +97,7 @@ class Accom_bot:
         if action == "location":
             self.driver.find_element_by_id(key).send_keys(self.requirements[action])
             self.driver.find_element_by_id(key).send_keys(Keys.TAB)
-        if action == "beds":
+        if action in ["beds_min", "beds_max"]:
             select = Select(self.driver.find_element_by_xpath(key))
             select.select_by_value(self.requirements[action])
         if action == "link_text":
@@ -139,6 +193,8 @@ class Accom_bot:
     def main(self) -> int:
         try:
             all_places = []
+            self.driver = self.init_driver()
+            self.driver.set_window_size(1920, 1080)
             for website in self.websites:
                 self.go_to_website(website)
                 time.sleep(1)
