@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
+from os import EX_DATAERR
 from loguru import logger
 from selenium import webdriver
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
+from concurrent.futures import ThreadPoolExecutor
 import platform
 import re
 import unittest
@@ -17,7 +19,6 @@ EXIT_CODE = 1
 
 class Accom_bot:
     def __init__(self) -> None:
-        self.driver = None
         config = self.validate_config(self.read_config())
         self.requirements = config["requirements"]
         self.websites = config["websites"]
@@ -89,29 +90,29 @@ class Accom_bot:
             else:
                 return config
 
-    def process_action(self, key: str, action: str) -> None:
+    def process_action(self, driver: webdriver, key: str, action: str) -> None:
         if action == "xpath":
-            self.driver.find_element_by_xpath(key).click()
+            driver.find_element_by_xpath(key).click()
         if action == "click_id":
-            self.driver.find_element_by_id(key).click()
+            driver.find_element_by_id(key).click()
         if action == "location":
-            self.driver.find_element_by_id(key).send_keys(self.requirements[action])
-            self.driver.find_element_by_id(key).send_keys(Keys.TAB)
+            driver.find_element_by_id(key).send_keys(self.requirements[action])
+            driver.find_element_by_id(key).send_keys(Keys.TAB)
         if action in ["beds_min", "beds_max"]:
-            select = Select(self.driver.find_element_by_xpath(key))
+            select = Select(driver.find_element_by_xpath(key))
             select.select_by_value(self.requirements[action])
         if action == "link_text":
-            self.driver.find_element_by_link_text(key).click()
+            driver.find_element_by_link_text(key).click()
         if action == "css":
-            self.driver.find_element_by_css_selector(key).click()
+            driver.find_element_by_css_selector(key).click()
 
     def handle_pagination(
-        self, key: str, action: str, regex: str, max_page: str
+        self, driver: webdriver, key: str, action: str, regex: str, max_page: str
     ) -> list:
         pages = []
         links = []
         if action == "get_xpath_list":
-            html_list = self.driver.find_element_by_xpath(key)
+            html_list = driver.find_element_by_xpath(key)
             items = html_list.find_elements_by_tag_name("li")
             for item in items:
                 a_tags = item.find_elements_by_tag_name("a")
@@ -120,21 +121,21 @@ class Accom_bot:
             pages = sorted(list(set([page for page in pages if page is not None])))
             for index, page in enumerate(pages):
                 logger.info(f"Getting {index+1}/{len(pages)}: {page}")
-                self.driver.get(page)
-                urls = self.extract_urls(regex)
+                driver.get(page)
+                urls = self.extract_urls(driver, regex)
                 for url in urls:
                     links.append(url)
         elif action == "select":
             i = 1
-            max_page = int(self.driver.find_element_by_xpath(max_page).text)
+            max_page = int(driver.find_element_by_xpath(max_page).text)
             logger.debug(max_page)
             while True:
-                logger.info(f"Getting page {i}")
-                ActionChains(self.driver).send_keys(Keys.END).perform()
-                urls = self.extract_urls(regex)
+                logger.info(f"Getting page {i}/{max_page}")
+                ActionChains(driver).send_keys(Keys.END).perform()
+                urls = self.extract_urls(driver, regex)
                 for url in urls:
                     links.append(url)
-                self.driver.find_element_by_xpath(key).click()
+                driver.find_element_by_xpath(key).click()
                 if i == max_page:
                     break
                 i += 1
@@ -142,9 +143,9 @@ class Accom_bot:
         link = [result for result in link if result is not None]
         return links
 
-    def extract_urls(self, regex: str) -> list:
+    def extract_urls(self, driver: webdriver, regex: str) -> list:
         urls = []
-        elems = self.driver.find_elements_by_xpath("//a[@href]")
+        elems = driver.find_elements_by_xpath("//a[@href]")
         for elem in elems:
             try:
                 url = elem.get_attribute("href")
@@ -154,22 +155,22 @@ class Accom_bot:
                 pass
         return urls
 
-    def go_to_website(self, website: dict) -> None:
+    def go_to_website(self, driver: webdriver, website: dict) -> None:
         url = website["url"]
         logger.info(f"Current website: {url}")
-        self.driver.get(url)
+        driver.get(url)
 
-    def fill_search_form(self, website: dict) -> None:
+    def fill_search_form(self, driver: webdriver, website: dict) -> None:
         for index, step in enumerate(website["search"], 1):
             for key, action in step.items():
                 try:
                     logger.debug(f"Search action {index} - {key}, {action}")
-                    self.process_action(key, action)
+                    self.process_action(driver, key, action)
                 except:
                     pass
             time.sleep(0.5)
 
-    def get_links(self, website: dict, max_page=None) -> list:
+    def get_links(self, driver: webdriver, website: dict, max_page=None) -> list:
         links = []
         for index, step in enumerate(website["step"], 1):
             for key, action in step.items():
@@ -179,7 +180,7 @@ class Accom_bot:
                     for step in page_instructions:
                         for key1, action1 in step.items():
                             links = sorted(
-                                self.handle_pagination(key1, action1, key, max_page)
+                                self.handle_pagination(driver, key1, action1, key, max_page)
                             )
         links = list(set(links))
         logger.info(f"Found {len(links)} results from website {website['url']}")
@@ -188,26 +189,38 @@ class Accom_bot:
     def print_places(self, all_places: list) -> None:
         all_places = sorted(all_places)
         places = "\n".join(all_places)
-        logger.info(f"All places:\n{places}")
+        logger.info(f"All {len(places)} places:\n{places}")
+
+    def find_places(self, data: dict): 
+        driver = data["driver"]
+        website = data["website"]
+        driver.set_window_size(1920, 1080)
+        self.go_to_website(driver, website)
+        time.sleep(1)
+        self.fill_search_form(driver, website)
+        time.sleep(5)
+        max_page = website.get("max_page", None)
+        links = self.get_links(driver, website, max_page)
+        return links
 
     def main(self) -> int:
+        driver = self.init_driver()
         try:
             all_places = []
-            self.driver = self.init_driver()
-            self.driver.set_window_size(1920, 1080)
-            for website in self.websites:
-                self.go_to_website(website)
-                time.sleep(1)
-                self.fill_search_form(website)
-                time.sleep(5)
-                max_page = website.get("max_page", None)
-                links = self.get_links(website, max_page)
-                all_places = all_places + links
-            self.driver.quit()
+            data = []
+            for index, website in enumerate(self.websites):
+                data = {
+                    "driver": driver,
+                    "website": website
+                }
+                results = self.find_places(data)
+                for x in results:
+                    all_places.append(x)
+            driver.quit()
             self.print_places(all_places)
             return SUCCESS_CODE
         except:
-            self.driver.quit()
+            driver.quit()
             logger.error(traceback.format_exc())
             return EXIT_CODE
 
