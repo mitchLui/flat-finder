@@ -1,7 +1,8 @@
 {
     "requirements": {
         "location": "Bristol",
-        "beds": "4",
+        "beds_min": "4",
+        "beds_max": "4",
         "bathrooms": "2"
     },
     "websites": [
@@ -10,11 +11,11 @@
             "search": [
                 {"//*[@id='cookie-consent-form']/div/div/div/button[2]": "xpath"},
                 {"//*[@id='search-tabs-to-rent']": "xpath"},
-                {"//*[@id='beds_min']": "beds"},
+                {"//*[@id='beds_min']": "beds_min"},
                 {"search-input-location": "location"},
                 {"search-submit": "click_id"},
                 {"AnyBeds_testId": "click_id"},
-                {"//*[@id='beds_max']": "beds"},
+                {"//*[@id='beds_max']": "beds_max"},
                 {"[data-testid='search-button']": "css"}
             ],
             "step": [
@@ -31,8 +32,8 @@
             "url": "https://www.rightmove.co.uk/student-accommodation.html",
             "search": [
                 {"searchLocation": "location"},
-                {"//*[@id='minBedrooms']": "beds"},
-                {"//*[@id='maxBedrooms']": "beds"},
+                {"//*[@id='minBedrooms']": "beds_min"},
+                {"//*[@id='maxBedrooms']": "beds_max"},
                 {"button-findAccomodation": "click_id"},
                 {"button-findAccomodation": "click_id"}
             ],
