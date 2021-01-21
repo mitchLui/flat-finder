@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from typing import final
 from loguru import logger
 from selenium import webdriver
 from selenium.webdriver.support.ui import Select
@@ -97,6 +96,7 @@ class Accom_bot:
         return html.fromstring(page.content)
 
     def check_bathroom_requirements(self, website: dict, places: list) -> list:
+        logger.info("Checking bathroom requirements...")
         final_places = []
         with ThreadPoolExecutor(max_workers=70) as e:
             results = list(e.map(self.request_thread_function, places))
@@ -183,10 +183,9 @@ class Accom_bot:
         driver.get(url)
 
     def fill_search_form(self, driver: webdriver, website: dict) -> None:
-        for index, step in enumerate(website["search"], 1):
+        for step in website["search"]:
             for key, action in step.items():
                 try:
-                    logger.debug(f"Search action {index} - {key}, {action}")
                     self.process_action(driver, key, action)
                 except:
                     pass
@@ -194,9 +193,8 @@ class Accom_bot:
 
     def get_links(self, driver: webdriver, website: dict, max_page=None) -> list:
         links = []
-        for index, step in enumerate(website["step"], 1):
+        for step in website["step"]:
             for key, action in step.items():
-                logger.debug(f"Extract action {index} - {key}, {action}")
                 if action == "match_url_regex":
                     page_instructions = website["pagination"]
                     for step in page_instructions:
@@ -214,7 +212,7 @@ class Accom_bot:
     def print_places(self, all_places: list) -> None:
         all_places = sorted(all_places)
         places = "\n".join(all_places)
-        logger.info(f"All {len(places)} places:\n{places}")
+        logger.info(f"All {len(all_places)} places:\n{places}")
 
     def find_places(self, data: dict):
         driver = data["driver"]
@@ -233,7 +231,7 @@ class Accom_bot:
         try:
             all_places = []
             data = []
-            for index, website in enumerate(self.websites):
+            for website in self.websites:
                 data = {"driver": driver, "website": website}
                 results = self.find_places(data)
                 for x in results:
