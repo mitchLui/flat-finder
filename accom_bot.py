@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 from loguru import logger
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from concurrent.futures import ThreadPoolExecutor
 from lxml import html
+import chromedriver_binary
 import webbrowser
 import requests
-import platform
 import re
 import unittest
 import json
@@ -39,12 +40,20 @@ class Accom_bot:
                 raise ValueError(f"No config found.")
 
     def init_driver(self) -> webdriver:
-        if platform.system() == "Darwin":
-            driver = webdriver.Safari()
-        elif platform.system() == "Windows":
-            driver = webdriver.Edge()
-        else:
-            driver = webdriver.Firefox()
+        chromedriver_location = chromedriver_binary.chromedriver_filename
+        logger.info(chromedriver_location)
+        options = Options()
+        options.headless = True
+        options.binary_location = chromedriver_location
+        options.add_argument("--start-maximized")
+        options.add_argument("--remote-debugging-port=9515")
+        options.add_argument("--no-sandbox")
+        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument("disable-extensions")
+        options.add_argument("--disable-setuid-sandbox")
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option('useAutomationExtension', False)
+        driver = webdriver.Chrome(options=options)
         return driver
 
     def validate_config(self, config: dict) -> dict:
