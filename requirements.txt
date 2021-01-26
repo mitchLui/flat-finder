@@ -2,4 +2,3 @@ selenium
 loguru
 lxml
 requests
-chromedriver_binary
