@@ -42,6 +42,7 @@ class Accom_bot:
                 raise ValueError(f"No config found.")
 
     def init_driver(self) -> webdriver:
+        """
         chromedriver_location = chromedriver_binary.chromedriver_filename
         logger.info(chromedriver_location)
         options = Options()
@@ -56,6 +57,8 @@ class Accom_bot:
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option('useAutomationExtension', False)
         driver = webdriver.Chrome(options=options)
+        """
+        driver =  webdriver.Safari()
         return driver
 
     def validate_config(self, config: dict) -> dict:
@@ -270,11 +273,11 @@ class Run:
 
     def read_args(self) -> argparse.Namespace:
         parser = argparse.ArgumentParser(add_help=False)
-        parser.add_argument("--open-results", action="store", choices=[True, False], default=True)
+        parser.add_argument("--open-results", action="store", default=True)
         argv = parser.parse_args()
         return argv
 
-    def run_main(self):
+    def run_bot(self):
         argv = self.read_args()
         bot = Accom_bot(argv.open_results)
         bot.main()
@@ -288,5 +291,5 @@ class Tests(unittest.TestCase):
         return super().tearDown()
 
 if __name__ == "__main__":
-    accom_bot = Accom_bot()
-    accom_bot.main()
+    run = Run()
+    run.run_bot()
