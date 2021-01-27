@@ -40,7 +40,7 @@ class Accom_bot:
             else:
                 raise ValueError(f"No config found.")
 
-    def init_driver(self) -> webdriver:
+    def init_driver(self) -> webdriver: #TODO REPLACE
         if platform.system() == "Darwin": driver =  webdriver.Safari()
         elif platform.system() == "Linux": driver = webdriver.Firefox()
         else: driver = webdriver.Edge()
@@ -112,7 +112,7 @@ class Accom_bot:
                 final_places.append(place)
         return final_places
 
-    def process_action(self, driver: webdriver, key: str, action: str) -> None:
+    def process_action(self, driver: webdriver, key: str, action: str) -> None: #TODO REPLACE
         if action == "xpath":
             driver.find_element_by_xpath(key).click()
         if action == "click_id":
@@ -130,7 +130,7 @@ class Accom_bot:
 
     def handle_pagination(
         self, driver: webdriver, key: str, action: str, regex: str, max_page: str
-    ) -> list:
+    ) -> list: #TODO REPLACE
         pages = []
         links = []
         if action == "get_xpath_list":
@@ -165,7 +165,7 @@ class Accom_bot:
         link = [result for result in link if result is not None]
         return links
 
-    def extract_urls(self, driver: webdriver, regex: str) -> list:
+    def extract_urls(self, driver: webdriver, regex: str) -> list: #TODO REPLACE
         urls = []
         elems = driver.find_elements_by_xpath("//a[@href]")
         for elem in elems:
@@ -177,12 +177,12 @@ class Accom_bot:
                 pass
         return urls
 
-    def go_to_website(self, driver: webdriver, website: dict) -> None:
+    def go_to_website(self, driver: webdriver, website: dict) -> None: #TODO REPLACE
         url = website["url"]
         logger.info(f"Current website: {url}")
         driver.get(url)
 
-    def fill_search_form(self, driver: webdriver, website: dict) -> None:
+    def fill_search_form(self, driver: webdriver, website: dict) -> None: #TODO REPLACE
         for step in website["search"]:
             for key, action in step.items():
                 try:
@@ -191,7 +191,7 @@ class Accom_bot:
                     pass
             time.sleep(0.5)
 
-    def get_links(self, driver: webdriver, website: dict, max_page=None) -> list:
+    def get_links(self, driver: webdriver, website: dict, max_page=None) -> list: #TODO REPLACE
         links = []
         for step in website["step"]:
             for key, action in step.items():
@@ -230,7 +230,7 @@ class Accom_bot:
         for place in places:
             webbrowser.open_new_tab(place)
 
-    def main(self) -> int:
+    def main(self) -> int: #TODO REPLACE
         driver = self.init_driver()
         try:
             all_places = []
