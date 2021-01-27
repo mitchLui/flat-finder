@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 from loguru import logger
-from selenium import webdriver
-from selenium.webdriver.support.ui import Select
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.action_chains import ActionChains
-from concurrent.futures import ThreadPoolExecutor
 from lxml import html
+import pyppeteer
+import asyncio
 import platform
 import argparse
 import webbrowser
