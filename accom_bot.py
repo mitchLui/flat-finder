@@ -6,9 +6,10 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from concurrent.futures import ThreadPoolExecutor
 from lxml import html
+import platform
+import argparse
 import webbrowser
 import requests
-import platform
 import re
 import unittest
 import json
@@ -20,10 +21,11 @@ EXIT_CODE = 1
 
 
 class Accom_bot:
-    def __init__(self) -> None:
+    def __init__(self, open_results = False) -> None:
         config = self.validate_config(self.read_config())
         self.requirements = config["requirements"]
         self.websites = config["websites"]
+        self.open_results = open_results
 
     def read_config(self, filename="config.json") -> dict:
         data = []
@@ -39,12 +41,9 @@ class Accom_bot:
                 raise ValueError(f"No config found.")
 
     def init_driver(self) -> webdriver:
-        if platform.system() == "Darwin":
-            driver = webdriver.Safari()
-        elif platform.system() == "Windows":
-            driver = webdriver.Edge()
-        else:
-            driver = webdriver.Firefox()
+        if platform.system() == "Darwin": driver =  webdriver.Safari()
+        elif platform.system() == "Linux": driver = webdriver.Firefox()
+        else: driver = webdriver.Edge()
         return driver
 
     def validate_config(self, config: dict) -> dict:
@@ -244,12 +243,29 @@ class Accom_bot:
             driver.quit()
             all_places = sorted(all_places)
             self.print_places(all_places)
-            self.open_links(all_places)
+            if self.open_results:
+                self.open_links(all_places)
             return SUCCESS_CODE
         except:
             driver.quit()
             logger.error(traceback.format_exc())
             return EXIT_CODE
+
+class Run:
+    
+    def __init__(self) -> None:
+        pass
+
+    def read_args(self) -> argparse.Namespace:
+        parser = argparse.ArgumentParser(add_help=False)
+        parser.add_argument("--open-results", action="store_true")
+        argv = parser.parse_args()
+        return argv
+
+    def run_bot(self):
+        argv = self.read_args()
+        bot = Accom_bot(argv.open_results)
+        bot.main()
 
 
 class Tests(unittest.TestCase):
@@ -259,7 +275,6 @@ class Tests(unittest.TestCase):
     def tearDown(self) -> None:
         return super().tearDown()
 
-
 if __name__ == "__main__":
-    accom_bot = Accom_bot()
-    accom_bot.main()
+    run = Run()
+    run.run_bot()

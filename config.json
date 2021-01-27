@@ -1,6 +1,6 @@
 {
     "requirements": {
-        "location": "Bristol",
+        "location": "Bristol City Centre",
         "beds_min": "4",
         "beds_max": "4",
         "bathrooms": "2"
