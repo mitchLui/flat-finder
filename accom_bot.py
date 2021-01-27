@@ -258,7 +258,7 @@ class Run:
 
     def read_args(self) -> argparse.Namespace:
         parser = argparse.ArgumentParser(add_help=False)
-        parser.add_argument("--open-results", action="store", default=True)
+        parser.add_argument("--open-results", action="store_true")
         argv = parser.parse_args()
         return argv
 
