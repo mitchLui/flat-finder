@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from loguru import logger
 from lxml import html
+from concurrent.futures import ThreadPoolExecutor
 import pyppeteer
 import asyncio
 import platform
