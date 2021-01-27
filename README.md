@@ -48,4 +48,10 @@ Simply run the python script:
 python3 accom_bot.py
 ```
 
+To open all the results in your web browser:
+
+```sh
+python3 accom_bot.py --open-results
+```
+
 ---
