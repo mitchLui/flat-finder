@@ -1,6 +1,6 @@
 {
     "requirements": {
-        "location": "Bristol City Centre",
+        "location": "Bristol",
         "beds_min": "4",
         "beds_max": "4",
         "bathrooms": "2"
@@ -8,46 +8,28 @@
     "websites": [
         {
             "url": "https://www.zoopla.co.uk",
+            "domain": "https://www.zoopla.co.uk",
             "search": [
-                {"//*[@id='cookie-consent-form']/div/div/div/button[2]": "xpath"},
-                {"//*[@id='search-tabs-to-rent']": "xpath"},
-                {"//*[@id='beds_min']": "beds_min"},
-                {"search-input-location": "location"},
-                {"search-submit": "click_id"},
-                {"AnyBeds_testId": "click_id"},
-                {"//*[@id='beds_max']": "beds_max"},
-                {"[data-testid='search-button']": "css"}
+                {"#cookie-consent-form > div > div > div > button.ui-button-secondary": "click"},
+                {"#search-tabs-to-rent": "click"},
+                {"#beds_min": "beds_min"},
+                {"#search-input-location-wrapper > span > span.search-input-location-placeholder-1": "click"},
+                {"location": "location"},
+                {"#search-submit": "click"},
+                {"wait": "wait"},
+                {"#AnyBeds_testId": "evaluate_click"},
+                {"#beds_max": "beds_max"},
+                {"#main-content > div > button": "click"}
             ],
             "step": [
                 {"^https:\\/\\/www\\.zoopla\\.co\\.uk/to-rent/details/\\d+\\?search_identifier=.*$": "match_url_regex"}
             ],
             "pagination": [
-                {"//*[@id='__next']/div[4]/div/main/div[2]/div[2]/ul": "get_xpath_list"}
+                {"#__next > div.css-1wn73pq-SearchResultsWrapper.es0c9wm13 > div > main > div.css-8jz4jb-SearchResultsLayoutGroup.es0c9wm6 > div.css-1i1ho5x-PaginationContainer.es0c9wm5 > ul": "get_pages"}
             ],
             "check_property": {
                 "xpath": "//*[@id='property-details-tab']/div[1]/ul/li[2]/span/text()",
                 "index": 0
-            }
-        },
-        {
-            "url": "https://www.rightmove.co.uk/student-accommodation.html",
-            "search": [
-                {"searchLocation": "location"},
-                {"//*[@id='minBedrooms']": "beds_min"},
-                {"//*[@id='maxBedrooms']": "beds_max"},
-                {"button-findAccomodation": "click_id"},
-                {"button-findAccomodation": "click_id"}
-            ],
-            "step": [
-                {"^https:\\/\\/www\\.rightmove\\.co\\.uk/properties/\\d+$": "match_url_regex"}
-            ],
-            "pagination": [
-                {"//*[@id='l-container']/div[3]/div/div/div/div[3]/button": "select"}
-            ],
-            "max_page": "//*[@id='l-container']/div[3]/div/div/div/div[2]/span[3]",
-            "check_property": {
-                "xpath": "//*[@id='root']/div/div[3]/main/div[6]/div[3]/div[2]/div[2]/div/text()",
-                "index": 1
             }
         }
     ]

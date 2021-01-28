@@ -4,7 +4,6 @@ from lxml import html
 from concurrent.futures import ThreadPoolExecutor
 import pyppeteer
 import asyncio
-import platform
 import argparse
 import webbrowser
 import requests
@@ -38,11 +37,17 @@ class Accom_bot:
             else:
                 raise ValueError(f"No config found.")
 
-    def init_driver(self) -> webdriver: #TODO REPLACE
-        if platform.system() == "Darwin": driver =  webdriver.Safari()
-        elif platform.system() == "Linux": driver = webdriver.Firefox()
-        else: driver = webdriver.Edge()
-        return driver
+    async def init_browser(self) -> pyppeteer.browser.Browser:
+        browser = await pyppeteer.launch(headless=False, slowMo = 5) #TODO REMOVE HEADLESS
+        return browser
+    
+    async def new_browser_page(self, browser: pyppeteer.browser.Browser) -> pyppeteer.page.Page:
+        page = await browser.newPage()
+        await page.setViewport({
+            "width": 960,
+            "height": 1080
+        })
+        return page
 
     def validate_config(self, config: dict) -> dict:
         requirements = config["requirements"]
@@ -93,7 +98,7 @@ class Accom_bot:
         page = requests.get(url)
         return html.fromstring(page.content)
 
-    def check_bathroom_requirements(self, website: dict, places: list) -> list:
+    async def check_bathroom_requirements(self, website: dict, places: list) -> list: #TODO VERIFY
         logger.info("Checking bathroom requirements...")
         final_places = []
         with ThreadPoolExecutor(max_workers=70) as e:
@@ -110,44 +115,60 @@ class Accom_bot:
                 final_places.append(place)
         return final_places
 
-    def process_action(self, driver: webdriver, key: str, action: str) -> None: #TODO REPLACE
-        if action == "xpath":
-            driver.find_element_by_xpath(key).click()
-        if action == "click_id":
-            driver.find_element_by_id(key).click()
-        if action == "location":
-            driver.find_element_by_id(key).send_keys(self.requirements[action])
-            driver.find_element_by_id(key).send_keys(Keys.TAB)
-        if action in ["beds_min", "beds_max"]:
-            select = Select(driver.find_element_by_xpath(key))
-            select.select_by_value(self.requirements[action])
-        if action == "link_text":
-            driver.find_element_by_link_text(key).click()
-        if action == "css":
-            driver.find_element_by_css_selector(key).click()
-
-    def handle_pagination(
-        self, driver: webdriver, key: str, action: str, regex: str, max_page: str
-    ) -> list: #TODO REPLACE
-        pages = []
+    async def process_action(self, page: pyppeteer.page.Page, key: str, action: str) -> None:
+        logger.debug(f"key: {key}, action: {action}")
+        time.sleep(0.5)
+        try:
+            if action == "click":
+                await page.click(key)
+            if action == "evaluate_click":
+                evaluate = f"() => document.querySelector('{key}').click()"
+                await page.evaluate(evaluate)
+            if action == "location":
+                await page.keyboard.type(self.requirements[action])
+            if action in ["beds_min", "beds_max"]:
+                await page.select(key, self.requirements[action])
+            if action == "wait":
+                task = asyncio.create_task(page.waitForNavigation({"waitUntil": "networkidle0"}))
+                await asyncio.wait({task})
+        except:
+            logger.error(traceback.format_exc())
+            
+    async def handle_pagination(
+        self, page: pyppeteer.page.Page, key: str, action: str, regex: str, max_page: str, domain: str
+    ) -> list: #TODO DEBUG
         links = []
-        if action == "get_xpath_list":
-            html_list = driver.find_element_by_xpath(key)
-            items = html_list.find_elements_by_tag_name("li")
-            for item in items:
-                a_tags = item.find_elements_by_tag_name("a")
-                for a_tag in a_tags:
-                    pages.append(a_tag.get_attribute("href"))
-            pages = sorted(list(set([page for page in pages if page is not None])))
-            for index, page in enumerate(pages):
-                logger.info(f"Getting {index+1}/{len(pages)}: {page}")
-                driver.get(page)
-                urls = self.extract_urls(driver, regex)
-                for url in urls:
-                    links.append(url)
+        if action == "get_pages":
+            while True:
+                try:    
+                    evaluate = f"""() => Array.from(
+                        document.querySelectorAll('a[href]'),
+                        a => a.getAttribute('href')
+                    )"""
+                    logger.info('evaluated')
+                    all_links = await page.evaluate(evaluate)
+                    all_links = [f"{domain}{x}" for x in all_links]
+                    matched_urls = await self.extract_urls(all_links, regex)
+                    logger.debug(matched_urls)
+                    for url in matched_urls:
+                        links.append(url)
+                    #TODO DEBUG
+                    evaluate = f"""() => {{
+                        var ul = document.querySelector('{key}');
+                        var last_url = ul.children[ul.children.length-1].getAttribute('href');
+                        return last_url
+                    }}
+                    """
+                    next_url = await page.evaluate(evaluate)
+                    logger.info(next_url)
+                    break
+                except:
+                    logger.error(traceback.format_exc())
+                    break
         elif action == "select":
+            """
             i = 1
-            max_page = int(driver.find_element_by_xpath(max_page).text)
+            max_page = int(page.xpath(max_page).text)
             logger.debug(max_page)
             while True:
                 logger.info(f"Getting page {i}/{max_page}")
@@ -159,37 +180,37 @@ class Accom_bot:
                 if i == max_page:
                     break
                 i += 1
+            """
         link = list(set(links))
         link = [result for result in link if result is not None]
         return links
 
-    def extract_urls(self, driver: webdriver, regex: str) -> list: #TODO REPLACE
-        urls = []
-        elems = driver.find_elements_by_xpath("//a[@href]")
-        for elem in elems:
+    async def extract_urls(self, urls: list, regex: str) -> list: #TODO REPLACE
+        matched_urls = []
+        for url in urls:
             try:
-                url = elem.get_attribute("href")
                 if re.search(rf"{regex}", url):
-                    urls.append(url)
+                    matched_urls.append(url)
             except:
                 pass
-        return urls
+        return matched_urls
 
-    def go_to_website(self, driver: webdriver, website: dict) -> None: #TODO REPLACE
+    async def go_to_website(self, page: pyppeteer.page.Page, website: dict) -> None: #TODO VERIFY
         url = website["url"]
         logger.info(f"Current website: {url}")
-        driver.get(url)
+        await page.goto(url)
+        time.sleep(1)
 
-    def fill_search_form(self, driver: webdriver, website: dict) -> None: #TODO REPLACE
+    async def fill_search_form(self, page: pyppeteer.page.Page, website: dict) -> None: #TODO REPLACE
         for step in website["search"]:
             for key, action in step.items():
                 try:
-                    self.process_action(driver, key, action)
+                     await self.process_action(page, key, action)
                 except:
                     pass
             time.sleep(0.5)
 
-    def get_links(self, driver: webdriver, website: dict, max_page=None) -> list: #TODO REPLACE
+    async def get_links(self, page: pyppeteer.page.Page, website: dict, max_page=None) -> list: #TODO VERIFY
         links = []
         for step in website["step"]:
             for key, action in step.items():
@@ -198,12 +219,12 @@ class Accom_bot:
                     for step in page_instructions:
                         for key1, action1 in step.items():
                             links = sorted(
-                                self.handle_pagination(
-                                    driver, key1, action1, key, max_page
+                                await self.handle_pagination(
+                                    page, key1, action1, key, max_page, website["domain"]
                                 )
                             )
         links = list(set(links))
-        links = self.check_bathroom_requirements(website, links)
+        links = await self.check_bathroom_requirements(website, links)
         logger.info(f"Found {len(links)} results from website {website['url']}")
         return links
 
@@ -212,40 +233,44 @@ class Accom_bot:
         places = "\n".join(all_places)
         logger.info(f"All {len(all_places)} places:\n{places}")
 
-    def find_places(self, data: dict):
-        driver = data["driver"]
-        website = data["website"]
-        driver.set_window_size(1920, 1080)
-        self.go_to_website(driver, website)
-        time.sleep(1)
-        self.fill_search_form(driver, website)
-        time.sleep(5)
-        max_page = website.get("max_page", None)
-        links = self.get_links(driver, website, max_page)
-        return links
+    async def find_places(self, website: dict): #TODO VERIFY
+        browser = await self.init_browser()
+        links = []
+        try:
+            page = await self.new_browser_page(browser)
+            await self.go_to_website(page, website)
+            await self.fill_search_form(page, website)
+            max_page = website.get("max_page", None)
+            links = await self.get_links(page, website, max_page)
+            await browser.close()
+        except:
+            logger.error(traceback.format_exc())
+            await browser.close()
+        finally:
+            return links
 
     def open_links(self, places: list):
         for place in places:
             webbrowser.open_new_tab(place)
 
-    def main(self) -> int: #TODO REPLACE
-        driver = self.init_driver()
+    async def main(self) -> int: #TODO REPLACE
         try:
             all_places = []
             data = []
             for website in self.websites:
-                data = {"driver": driver, "website": website}
-                results = self.find_places(data)
-                for x in results:
-                    all_places.append(x)
-            driver.quit()
+                results = await self.find_places(website)
+                logger.debug(results)
+                for url in results:
+                    all_places.append(url)
+                time.sleep(5)
+            """
             all_places = sorted(all_places)
             self.print_places(all_places)
+            """
             if self.open_results:
                 self.open_links(all_places)
             return SUCCESS_CODE
         except:
-            driver.quit()
             logger.error(traceback.format_exc())
             return EXIT_CODE
 
@@ -260,10 +285,11 @@ class Run:
         argv = parser.parse_args()
         return argv
 
-    def run_bot(self):
+    async def run_bot(self):
         argv = self.read_args()
         bot = Accom_bot(argv.open_results)
-        bot.main()
+        await bot.main()
+        
 
 
 class Tests(unittest.TestCase):
@@ -275,4 +301,4 @@ class Tests(unittest.TestCase):
 
 if __name__ == "__main__":
     run = Run()
-    run.run_bot()
+    asyncio.get_event_loop().run_until_complete(run.run_bot())
