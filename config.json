@@ -1,9 +1,9 @@
 {
     "requirements": {
-        "location": "Bristol",
+        "location": "King's Cross, London",
         "beds_min": "4",
-        "beds_max": "4",
-        "bathrooms": "2"
+        "beds_max": "5",
+        "bathrooms": "3"
     },
     "websites": [
         {
