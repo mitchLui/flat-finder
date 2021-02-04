@@ -165,7 +165,7 @@ class Accom_bot:
                 except:
                     logger.error(traceback.format_exc())
                     break
-        elif action == "select":
+        elif action == "select": #TODO REPLACE
             """
             i = 1
             max_page = int(page.xpath(max_page).text)
