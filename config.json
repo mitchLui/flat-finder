@@ -1,6 +1,6 @@
 {
     "requirements": {
-        "location": "Bristol City Centre",
+        "location": "Bristol",
         "beds_min": "4",
         "beds_max": "4",
         "bathrooms": "2"
@@ -22,6 +22,7 @@
                 {"^https:\\/\\/www\\.zoopla\\.co\\.uk/to-rent/details/\\d+\\?search_identifier=.*$": "match_url_regex"}
             ],
             "pagination": [
+                {"//*[@id='__next']/div[4]/div/main/div[2]/div[3]/ul": "get_xpath_list"},
                 {"//*[@id='__next']/div[4]/div/main/div[2]/div[2]/ul": "get_xpath_list"}
             ],
             "check_property": {
@@ -30,13 +31,13 @@
             }
         },
         {
-            "url": "https://www.rightmove.co.uk/student-accommodation.html",
+            "url": "https://www.rightmove.co.uk/property-to-rent.html",
             "search": [
                 {"searchLocation": "location"},
+                {"search": "click_id"},
                 {"//*[@id='minBedrooms']": "beds_min"},
                 {"//*[@id='maxBedrooms']": "beds_max"},
-                {"button-findAccomodation": "click_id"},
-                {"button-findAccomodation": "click_id"}
+                {"submit": "click_id"}
             ],
             "step": [
                 {"^https:\\/\\/www\\.rightmove\\.co\\.uk/properties/\\d+$": "match_url_regex"}

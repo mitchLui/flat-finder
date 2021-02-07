@@ -199,11 +199,14 @@ class Accom_bot:
                     page_instructions = website["pagination"]
                     for step in page_instructions:
                         for key1, action1 in step.items():
-                            links = sorted(
-                                self.handle_pagination(
-                                    driver, key1, action1, key, max_page
+                            try:
+                                links = sorted(
+                                    self.handle_pagination(
+                                        driver, key1, action1, key, max_page
+                                    )
                                 )
-                            )
+                            except Exception:
+                                pass
         links = list(set(links))
         links = self.check_bathroom_requirements(website, links)
         logger.info(f"Found {len(links)} results from website {website['url']}")
