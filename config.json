@@ -1,13 +1,14 @@
 {
     "requirements": {
         "location": "Bristol",
-        "beds_min": "4",
-        "beds_max": "4",
-        "bathrooms": "2"
+        "beds_min": "1",
+        "beds_max": "1",
+        "bathrooms": "1"
     },
     "websites": [
         {
             "url": "https://www.zoopla.co.uk",
+            "active": false,
             "search": [
                 {"//*[@id='cookie-consent-form']/div/div/div/button[2]": "xpath"},
                 {"//*[@id='search-tabs-to-rent']": "xpath"},
@@ -32,6 +33,7 @@
         },
         {
             "url": "https://www.rightmove.co.uk/property-to-rent.html",
+            "active": true,
             "search": [
                 {"searchLocation": "location"},
                 {"search": "click_id"},

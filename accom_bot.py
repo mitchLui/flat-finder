@@ -4,6 +4,7 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
 from concurrent.futures import ThreadPoolExecutor
 from lxml import html
 import platform
@@ -114,19 +115,19 @@ class Accom_bot:
 
     def process_action(self, driver: webdriver, key: str, action: str) -> None:
         if action == "xpath":
-            driver.find_element_by_xpath(key).click()
+            driver.find_element(By.XPATH, key).click()
         if action == "click_id":
-            driver.find_element_by_id(key).click()
+            driver.find_element(By.ID, key).click()
         if action == "location":
-            driver.find_element_by_id(key).send_keys(self.requirements[action])
-            driver.find_element_by_id(key).send_keys(Keys.TAB)
+            driver.find_element(By.ID, key).send_keys(self.requirements[action])
+            driver.find_element(By.ID, key).send_keys(Keys.TAB)
         if action in ["beds_min", "beds_max"]:
-            select = Select(driver.find_element_by_xpath(key))
+            select = Select(driver.find_element(By.XPATH, key))
             select.select_by_value(self.requirements[action])
         if action == "link_text":
-            driver.find_element_by_link_text(key).click()
+            driver.find_element(By.LINK_TEXT, key).click()
         if action == "css":
-            driver.find_element_by_css_selector(key).click()
+            driver.find_element(By.CSS_SELECTOR, key).click()
 
     def handle_pagination(
         self, driver: webdriver, key: str, action: str, regex: str, max_page: str
@@ -134,10 +135,10 @@ class Accom_bot:
         pages = []
         links = []
         if action == "get_xpath_list":
-            html_list = driver.find_element_by_xpath(key)
-            items = html_list.find_elements_by_tag_name("li")
-            for item in items:
-                a_tags = item.find_elements_by_tag_name("a")
+            html_list = driver.find_element(By.XPATH, key).get_attribute
+            items = html_list.find_elements(By.TAG_NAME, "li")
+            for _ in items:
+                a_tags = html_list.find_elements(By.TAG_NAME, "a")
                 for a_tag in a_tags:
                     pages.append(a_tag.get_attribute("href"))
             pages = sorted(list(set([page for page in pages if page is not None])))
@@ -149,7 +150,7 @@ class Accom_bot:
                     links.append(url)
         elif action == "select":
             i = 1
-            max_page = int(driver.find_element_by_xpath(max_page).text)
+            max_page = int(driver.find_elements(By.XPATH, max_page).text)
             logger.debug(max_page)
             while True:
                 logger.info(f"Getting page {i}/{max_page}")
@@ -157,7 +158,7 @@ class Accom_bot:
                 urls = self.extract_urls(driver, regex)
                 for url in urls:
                     links.append(url)
-                driver.find_element_by_xpath(key).click()
+                driver.find_element(By.XPATH, key).click()
                 if i == max_page:
                     break
                 i += 1
@@ -239,10 +240,12 @@ class Accom_bot:
             all_places = []
             data = []
             for website in self.websites:
-                data = {"driver": driver, "website": website}
-                results = self.find_places(data)
-                for x in results:
-                    all_places.append(x)
+                logger.info(website)
+                if website["active"] == True:
+                    data = {"driver": driver, "website": website}
+                    results = self.find_places(data)
+                    for x in results:
+                        all_places.append(x)
             driver.quit()
             all_places = sorted(all_places)
             self.print_places(all_places)
